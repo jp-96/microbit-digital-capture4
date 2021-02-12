@@ -44,6 +44,14 @@ static const uint16_t MICROBIT_CUSTOM_ID_BASE = 32768;
  * MicroBitIndoorBikeStepService
  */
 
+#ifndef BLE_DEVICE_LOCAL_NAME_CHENGE
+#define BLE_DEVICE_LOCAL_NAME_CHENGE 1
+#endif /* #ifndef BLE_DEVICE_LOCAL_NAME_CHENGE */
+
+#ifndef BLE_DEVICE_LOCAL_NAME
+#define BLE_DEVICE_LOCAL_NAME "STEP:BIT"
+#endif /* #ifndef BLE_DEVICE_LOCAL_NAME */
+
 // Event Bus ID for IndoorBike step sensor
 #ifndef MICROBIT_INDOORBIKE_STEP_SERVICE_ID
 #define MICROBIT_INDOORBIKE_STEP_SERVICE_ID (MICROBIT_CUSTOM_ID_BASE+2)

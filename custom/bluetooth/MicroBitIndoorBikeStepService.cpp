@@ -24,11 +24,26 @@ SOFTWARE.
 #include "MicroBitIndoorBikeStepService.h"
 #include "struct.h"
 
-MicroBitIndoorBikeStepService::MicroBitIndoorBikeStepService(MicroBit &_uBit, MicroBitIndoorBikeStepSensor &_indoorBike)
+MicroBitIndoorBikeStepService::MicroBitIndoorBikeStepService(MicroBit &_uBit, MicroBitIndoorBikeStepSensor &_indoorBike, uint16_t id)
     : uBit(_uBit), indoorBike(_indoorBike)
 {
-    
+    this->id = id;
     this->stopOrPause=0;
+
+    // BLE Appearance and LOCAL_NAME
+    uBit.ble->gap().accumulateAdvertisingPayload(GapAdvertisingData::GENERIC_CYCLING);
+    if (BLE_DEVICE_LOCAL_NAME_CHENGE)
+    {
+        uBit.ble->gap().accumulateAdvertisingPayload(GapAdvertisingData::COMPLETE_LOCAL_NAME
+            , (const uint8_t *)BLE_DEVICE_LOCAL_NAME, sizeof(BLE_DEVICE_LOCAL_NAME)-1);
+    }
+    
+    // FTMS - Service Advertising Data
+    const uint8_t FTMS_UUID[sizeof(UUID::ShortUUIDBytes_t)] = {0x26, 0x18};
+    uBit.ble->accumulateAdvertisingPayload(GapAdvertisingData::COMPLETE_LIST_16BIT_SERVICE_IDS, FTMS_UUID, sizeof(FTMS_UUID));
+    uint8_t serviceData[2+1+2];
+    struct_pack(serviceData, "<HBH", 0x1826, 0x01, 1<<5);
+    uBit.ble->accumulateAdvertisingPayload(GapAdvertisingData::SERVICE_DATA, serviceData, sizeof(serviceData));
 
     // Caractieristic
     GattCharacteristic  indoorBikeDataCharacteristic(
@@ -76,14 +91,7 @@ MicroBitIndoorBikeStepService::MicroBitIndoorBikeStepService(MicroBit &_uBit, Mi
         UUID(0x1826), characteristics, sizeof(characteristics) / sizeof(GattCharacteristic *)
     );
     uBit.ble->addService(service);
-
-    // FTMS - Service Advertising Data
-    const uint8_t FTMS_UUID[sizeof(UUID::ShortUUIDBytes_t)] = {0x26, 0x18};
-    uBit.ble->accumulateAdvertisingPayload(GapAdvertisingData::COMPLETE_LIST_16BIT_SERVICE_IDS, FTMS_UUID, sizeof(FTMS_UUID));
-    uint8_t serviceData[2+1+2];
-    struct_pack(serviceData, "<HBH", 0x1826, 0x01, 1<<5);
-    uBit.ble->accumulateAdvertisingPayload(GapAdvertisingData::SERVICE_DATA, serviceData, sizeof(serviceData));
-
+    
     // Characteristic Handle
     indoorBikeDataCharacteristicHandle = indoorBikeDataCharacteristic.getValueHandle();
     fitnessMachineControlPointCharacteristicHandle = fitnessMachineControlPointCharacteristic.getValueHandle();
@@ -115,7 +123,7 @@ MicroBitIndoorBikeStepService::MicroBitIndoorBikeStepService(MicroBit &_uBit, Mi
     {
         EventModel::defaultEventBus->listen(this->indoorBike.getId(), MICROBIT_INDOOR_BIKE_STEP_SENSOR_EVT_DATA_UPDATE
             , this, &MicroBitIndoorBikeStepService::indoorBikeUpdate, MESSAGE_BUS_LISTENER_IMMEDIATE);
-        EventModel::defaultEventBus->listen(MICROBIT_INDOORBIKE_STEP_SERVICE_ID, MICROBIT_EVT_ANY
+        EventModel::defaultEventBus->listen(this->id, MICROBIT_EVT_ANY
             , this, &MicroBitIndoorBikeStepService::onFitnessMachineControlPoint, MESSAGE_BUS_LISTENER_IMMEDIATE);
     }
 

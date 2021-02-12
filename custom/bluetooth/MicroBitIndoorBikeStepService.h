@@ -146,7 +146,7 @@ public:
       * @param _uBit The instance of a MicroBit runtime include a BLE device that we're running on.
       * @param _indoorBike An instance of MicroBitIndoorBikeStepSensor to use as our indoor bike source.
       */
-    MicroBitIndoorBikeStepService(MicroBit &_uBit, MicroBitIndoorBikeStepSensor &_indoorBike);
+    MicroBitIndoorBikeStepService(MicroBit &_uBit, MicroBitIndoorBikeStepSensor &_indoorBike, uint16_t id = MICROBIT_INDOORBIKE_STEP_SENSOR_ID);
 
     /**
       * Callback. Invoked when any of our attributes are written via BLE.
@@ -162,6 +162,9 @@ private:
     // instance
     MicroBit &uBit;
     MicroBitIndoorBikeStepSensor &indoorBike;
+    
+    // Event Bus ID of this service
+    uint16_t id;
     
     // Characteristic buffer
     uint8_t indoorBikeDataCharacteristicBuffer[2+2+2+2+2];
