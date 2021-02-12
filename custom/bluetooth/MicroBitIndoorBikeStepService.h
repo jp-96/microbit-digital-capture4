@@ -142,11 +142,11 @@ class MicroBitIndoorBikeStepService
 public:
     /**
       * Constructor.
-      * Create a representation of the IndoorBikeService
-      * @param _ble The instance of a BLE device that we're running on.
+      * Create a representation of the FTMS.
+      * @param _uBit The instance of a MicroBit runtime include a BLE device that we're running on.
       * @param _indoorBike An instance of MicroBitIndoorBikeStepSensor to use as our indoor bike source.
       */
-    MicroBitIndoorBikeStepService(BLEDevice &_ble, MicroBitIndoorBikeStepSensor &_indoorBike);
+    MicroBitIndoorBikeStepService(MicroBit &_uBit, MicroBitIndoorBikeStepSensor &_indoorBike);
 
     /**
       * Callback. Invoked when any of our attributes are written via BLE.
@@ -160,7 +160,7 @@ public:
 
 private:
     // instance
-    BLEDevice &ble;
+    MicroBit &uBit;
     MicroBitIndoorBikeStepSensor &indoorBike;
     
     // Characteristic buffer

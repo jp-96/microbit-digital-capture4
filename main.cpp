@@ -26,10 +26,13 @@ SOFTWARE.
 #include "MicroBitIndoorBikeStepSensor.h"
 #include "MicroBitIndoorBikeStepService.h"
 
-#define BLE_DEVICE_LOCAL_NAME "STEP:BIT"
 #ifndef BLE_DEVICE_LOCAL_NAME_CHENGE
 #define BLE_DEVICE_LOCAL_NAME_CHENGE 1
 #endif /* #ifndef BLE_DEVICE_LOCAL_NAME_CHENGE */
+
+#ifndef BLE_DEVICE_LOCAL_NAME
+#define BLE_DEVICE_LOCAL_NAME "STEP:BIT"
+#endif /* #ifndef BLE_DEVICE_LOCAL_NAME */
 
 MicroBit uBit;
 MicroBitIndoorBikeStepSensor *sensor;
@@ -44,9 +47,9 @@ void setup()
         uBit.ble->gap().accumulateAdvertisingPayload(GapAdvertisingData::COMPLETE_LOCAL_NAME
             , (const uint8_t *)BLE_DEVICE_LOCAL_NAME, sizeof(BLE_DEVICE_LOCAL_NAME)-1);
     }
-
+    // Setup a sensor and service
     sensor = new MicroBitIndoorBikeStepSensor(uBit);
-    service = new MicroBitIndoorBikeStepService(*(uBit.ble), *sensor);
+    service = new MicroBitIndoorBikeStepService(uBit, *sensor);
     uBit.addIdleComponent(sensor);
     
 }

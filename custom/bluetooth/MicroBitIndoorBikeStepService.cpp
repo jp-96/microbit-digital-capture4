@@ -24,8 +24,8 @@ SOFTWARE.
 #include "MicroBitIndoorBikeStepService.h"
 #include "struct.h"
 
-MicroBitIndoorBikeStepService::MicroBitIndoorBikeStepService(BLEDevice &_ble, MicroBitIndoorBikeStepSensor &_indoorBike)
-    : ble(_ble), indoorBike(_indoorBike)
+MicroBitIndoorBikeStepService::MicroBitIndoorBikeStepService(MicroBit &_uBit, MicroBitIndoorBikeStepSensor &_indoorBike)
+    : uBit(_uBit), indoorBike(_indoorBike)
 {
     
     this->stopOrPause=0;
@@ -75,14 +75,14 @@ MicroBitIndoorBikeStepService::MicroBitIndoorBikeStepService(BLEDevice &_ble, Mi
     GattService service(
         UUID(0x1826), characteristics, sizeof(characteristics) / sizeof(GattCharacteristic *)
     );
-    ble.addService(service);
+    uBit.ble->addService(service);
 
     // FTMS - Service Advertising Data
     const uint8_t FTMS_UUID[sizeof(UUID::ShortUUIDBytes_t)] = {0x26, 0x18};
-    ble.accumulateAdvertisingPayload(GapAdvertisingData::COMPLETE_LIST_16BIT_SERVICE_IDS, FTMS_UUID, sizeof(FTMS_UUID));
+    uBit.ble->accumulateAdvertisingPayload(GapAdvertisingData::COMPLETE_LIST_16BIT_SERVICE_IDS, FTMS_UUID, sizeof(FTMS_UUID));
     uint8_t serviceData[2+1+2];
     struct_pack(serviceData, "<HBH", 0x1826, 0x01, 1<<5);
-    ble.accumulateAdvertisingPayload(GapAdvertisingData::SERVICE_DATA, serviceData, sizeof(serviceData));
+    uBit.ble->accumulateAdvertisingPayload(GapAdvertisingData::SERVICE_DATA, serviceData, sizeof(serviceData));
 
     // Characteristic Handle
     indoorBikeDataCharacteristicHandle = indoorBikeDataCharacteristic.getValueHandle();
@@ -97,18 +97,18 @@ MicroBitIndoorBikeStepService::MicroBitIndoorBikeStepService(BLEDevice &_ble, Mi
         , FTMP_FLAGS_FITNESS_MACINE_FEATURES_FIELD
         , FTMP_FLAGS_TARGET_SETTING_FEATURES_FIELD
     );
-    ble.gattServer().write(fitnessMachineFeatureCharacteristicHandle
+    uBit.ble->gattServer().write(fitnessMachineFeatureCharacteristicHandle
         ,(uint8_t *)&fitnessMachineFeatureCharacteristicBuffer, sizeof(fitnessMachineFeatureCharacteristicBuffer));
     struct_pack(fitnessTrainingStatusCharacteristicBuffer
         , "<BB"
         , FTMP_FLAGS_TRAINING_STATUS_FIELD_00_STATUS_ONLY
         , FTMP_VAL_TRAINING_STATUS_01_IDEL
     );
-    ble.gattServer().write(fitnessTrainingStatusCharacteristicHandle
+    uBit.ble->gattServer().write(fitnessTrainingStatusCharacteristicHandle
         ,(uint8_t *)&fitnessTrainingStatusCharacteristicBuffer, sizeof(fitnessTrainingStatusCharacteristicBuffer));
     
     // GattCharacteristic::BLE_GATT_CHAR_PROPERTIES_WRITE - Fitness Machine Control Point Characteristic
-    ble.onDataWritten(this, &MicroBitIndoorBikeStepService::onDataWritten);
+    uBit.ble->onDataWritten(this, &MicroBitIndoorBikeStepService::onDataWritten);
     
     // Microbit Event listen
     if (EventModel::defaultEventBus)
@@ -174,7 +174,7 @@ void MicroBitIndoorBikeStepService::onDataWritten(const GattWriteCallbackParams 
         }
 
         // Response - Fitness Machine Control Point
-        ble.gattServer().write(fitnessMachineControlPointCharacteristicHandle
+        uBit.ble->gattServer().write(fitnessMachineControlPointCharacteristicHandle
                 , (const uint8_t *)&responseBuffer, sizeof(responseBuffer));
         
         // Fire MicroBit Event
@@ -188,14 +188,14 @@ void MicroBitIndoorBikeStepService::onDataWritten(const GattWriteCallbackParams 
 
 void MicroBitIndoorBikeStepService::indoorBikeUpdate(MicroBitEvent e)
 {
-    if (ble.getGapState().connected)
+    if (uBit.ble->getGapState().connected)
     {
         struct_pack(indoorBikeDataCharacteristicBuffer, "<HHH",
             FTMP_FLAGS_INDOOR_BIKE_DATA_CHAR,
             this->indoorBike.getSpeed100(),
             this->indoorBike.getCadence2()
         );
-        ble.gattServer().notify(indoorBikeDataCharacteristicHandle
+        uBit.ble->gattServer().notify(indoorBikeDataCharacteristicHandle
             , (uint8_t *)&indoorBikeDataCharacteristicBuffer, sizeof(indoorBikeDataCharacteristicBuffer));
     }
 }
@@ -208,21 +208,21 @@ uint8_t MicroBitIndoorBikeStepService::getStopOrPause()
 void MicroBitIndoorBikeStepService::sendTrainingStatusIdle(void)
 {
     static const uint8_t buff[]={FTMP_FLAGS_TRAINING_STATUS_FIELD_00_STATUS_ONLY, FTMP_VAL_TRAINING_STATUS_01_IDEL};
-    ble.gattServer().notify(this->fitnessTrainingStatusCharacteristicHandle
+    uBit.ble->gattServer().notify(this->fitnessTrainingStatusCharacteristicHandle
         , (uint8_t *)&buff, sizeof(buff));
 }
 
 void MicroBitIndoorBikeStepService::sendTrainingStatusManualMode(void)
 {
     static const uint8_t buff[]={FTMP_FLAGS_TRAINING_STATUS_FIELD_00_STATUS_ONLY, FTMP_VAL_TRAINING_STATUS_0D_MANUAL_MODE};
-    ble.gattServer().notify(this->fitnessTrainingStatusCharacteristicHandle
+    uBit.ble->gattServer().notify(this->fitnessTrainingStatusCharacteristicHandle
         , (uint8_t *)&buff, sizeof(buff));
 }
     
 void MicroBitIndoorBikeStepService::sendFitnessMachineStatusReset(void)
 {
     static const uint8_t buff[]={FTMP_OP_CODE_FITNESS_MACHINE_STATUS_01_RESET};
-    ble.gattServer().notify(this->fitnessTrainingStatusCharacteristicHandle
+    uBit.ble->gattServer().notify(this->fitnessTrainingStatusCharacteristicHandle
         , (uint8_t *)&buff, sizeof(buff));
 }
 
