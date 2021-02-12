@@ -1,3 +1,26 @@
+# microbit-digital-capture4
+
+ワイヤレス運動測量計のSTEP信号からケイデンスとスピードを求め、FTMP/FTMSを実装しました。
+
+## ライブラリのインストールとコンパイル
+
+```
+C:\workubit\venv\Scripts\activate.bat
+mbedubitwin10
+mbed compile
+
+```
+
+## コンパイルと書き込み（コピー）
+
+```
+C:\workubit\venv\Scripts\activate.bat
+
+mbed compile
+copy .\BUILD\NRF51_MICROBIT\GCC_ARM\microbit-digital-capture4.hex d:\
+
+```
+
 # mbed-microbit-template
 
 [mbed-microbit-template](https://github.com/jp-rad/mbed-microbit-template)は、GitHubテンプレートであり、C/C++言語を使ってランチェスター大学によって作成されたmicro:bitランタイムへの参照をあらかじめ含んでいます。  
