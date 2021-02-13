@@ -23,6 +23,7 @@ SOFTWARE.
 */
 #include "MicroBitIndoorBikeStepService.h"
 #include "struct.h"
+#include "inttypes.h" // for Debug
 
 MicroBitIndoorBikeStepService::MicroBitIndoorBikeStepService(MicroBit &_uBit, MicroBitIndoorBikeStepSensor &_indoorBike, uint16_t id)
     : uBit(_uBit), indoorBike(_indoorBike)
@@ -48,27 +49,27 @@ MicroBitIndoorBikeStepService::MicroBitIndoorBikeStepService(MicroBit &_uBit, Mi
     // Caractieristic
     GattCharacteristic  indoorBikeDataCharacteristic(
         UUID(0x2AD2)
-        , (uint8_t *)&indoorBikeDataCharacteristicBuffer, 0, sizeof(indoorBikeDataCharacteristicBuffer)
+        , (uint8_t *)&indoorBikeDataCharacteristicBuffer, 0, indoorBikeDataCharacteristicBufferSize
         , GattCharacteristic::BLE_GATT_CHAR_PROPERTIES_NOTIFY
     );
     GattCharacteristic  fitnessMachineControlPointCharacteristic(
         UUID(0x2AD9)
-        , (uint8_t *)&fitnessMachineControlPointCharacteristicBuffer, 0, sizeof(fitnessMachineControlPointCharacteristicBuffer)
+        , (uint8_t *)&fitnessMachineControlPointCharacteristicBuffer, 0, fitnessMachineControlPointCharacteristicBufferSize
         , GattCharacteristic::BLE_GATT_CHAR_PROPERTIES_WRITE|GattCharacteristic::BLE_GATT_CHAR_PROPERTIES_INDICATE
     );
     GattCharacteristic  fitnessMachineFeatureCharacteristic(
         UUID(0x2ACC)
-        , (uint8_t *)&fitnessMachineFeatureCharacteristicBuffer, 0, sizeof(fitnessMachineFeatureCharacteristicBuffer)
+        , (uint8_t *)&fitnessMachineFeatureCharacteristicBuffer, 0, fitnessMachineFeatureCharacteristicBufferSize
         , GattCharacteristic::BLE_GATT_CHAR_PROPERTIES_READ
     );
     GattCharacteristic  fitnessMachineStatusCharacteristic(
         UUID(0x2ADA)
-        , (uint8_t *)&fitnessMachineStatusCharacteristicBuffer, 0, sizeof(fitnessMachineStatusCharacteristicBuffer)
+        , (uint8_t *)&fitnessMachineStatusCharacteristicBuffer, 0, fitnessMachineStatusCharacteristicBufferSize
         , GattCharacteristic::BLE_GATT_CHAR_PROPERTIES_NOTIFY
     );
     GattCharacteristic  fitnessTrainingStatusCharacteristic(
         UUID(0x2AD3)
-        , (uint8_t *)&fitnessTrainingStatusCharacteristicBuffer, 0, sizeof(fitnessTrainingStatusCharacteristicBuffer)
+        , (uint8_t *)&fitnessTrainingStatusCharacteristicBuffer, 0, fitnessTrainingStatusCharacteristicBufferSize
         , GattCharacteristic::BLE_GATT_CHAR_PROPERTIES_READ | GattCharacteristic::BLE_GATT_CHAR_PROPERTIES_NOTIFY
     );
     
@@ -100,20 +101,22 @@ MicroBitIndoorBikeStepService::MicroBitIndoorBikeStepService(MicroBit &_uBit, Mi
     fitnessTrainingStatusCharacteristicHandle = fitnessTrainingStatusCharacteristic.getValueHandle();
     
     // GattCharacteristic::BLE_GATT_CHAR_PROPERTIES_READ
-    struct_pack(fitnessMachineFeatureCharacteristicBuffer
+    uint8_t fitnessMachineFeatureBuff[fitnessMachineFeatureCharacteristicBufferSize];
+    struct_pack(fitnessMachineFeatureBuff
         , "<II"
         , FTMP_FLAGS_FITNESS_MACINE_FEATURES_FIELD
         , FTMP_FLAGS_TARGET_SETTING_FEATURES_FIELD
     );
     uBit.ble->gattServer().write(fitnessMachineFeatureCharacteristicHandle
-        ,(uint8_t *)&fitnessMachineFeatureCharacteristicBuffer, sizeof(fitnessMachineFeatureCharacteristicBuffer));
-    struct_pack(fitnessTrainingStatusCharacteristicBuffer
+        ,(uint8_t *)&fitnessMachineFeatureBuff, fitnessMachineFeatureCharacteristicBufferSize);
+    uint8_t fitnessTrainingStatusBuff[fitnessTrainingStatusCharacteristicBufferSize];
+    struct_pack(fitnessTrainingStatusBuff
         , "<BB"
         , FTMP_FLAGS_TRAINING_STATUS_FIELD_00_STATUS_ONLY
         , FTMP_VAL_TRAINING_STATUS_01_IDEL
     );
     uBit.ble->gattServer().write(fitnessTrainingStatusCharacteristicHandle
-        ,(uint8_t *)&fitnessTrainingStatusCharacteristicBuffer, sizeof(fitnessTrainingStatusCharacteristicBuffer));
+        ,(uint8_t *)&fitnessTrainingStatusBuff, fitnessTrainingStatusCharacteristicBufferSize);
     
     // GattCharacteristic::BLE_GATT_CHAR_PROPERTIES_WRITE - Fitness Machine Control Point Characteristic
     uBit.ble->onDataWritten(this, &MicroBitIndoorBikeStepService::onDataWritten);
@@ -191,6 +194,14 @@ void MicroBitIndoorBikeStepService::onDataWritten(const GattWriteCallbackParams 
             new MicroBitEvent(MICROBIT_INDOORBIKE_STEP_SERVICE_ID, eventValue);
         }
 
+        // Debug - USB Serial
+        uBit.serial.printf("CP:%" PRIu32 ", eventValue[%d], opCode[0x%02X], result[0x%02X], data", (uint32_t)system_timer_current_time(), eventValue, opCode[0], result[0]);
+        for (int i=0; i<params->len; i++)
+        {
+            uBit.serial.printf(", 0x%02X", params->data[i]);
+        }
+        uBit.serial.printf("\r\n");
+
     }
 }
 
@@ -198,13 +209,14 @@ void MicroBitIndoorBikeStepService::indoorBikeUpdate(MicroBitEvent e)
 {
     if (uBit.ble->getGapState().connected)
     {
-        struct_pack(indoorBikeDataCharacteristicBuffer, "<HHH",
+        uint8_t buff[indoorBikeDataCharacteristicBufferSize];
+        struct_pack(buff, "<HHH",
             FTMP_FLAGS_INDOOR_BIKE_DATA_CHAR,
             this->indoorBike.getSpeed100(),
             this->indoorBike.getCadence2()
         );
         uBit.ble->gattServer().notify(indoorBikeDataCharacteristicHandle
-            , (uint8_t *)&indoorBikeDataCharacteristicBuffer, sizeof(indoorBikeDataCharacteristicBuffer));
+            , (uint8_t *)&buff, indoorBikeDataCharacteristicBufferSize);
     }
 }
 
@@ -230,7 +242,7 @@ void MicroBitIndoorBikeStepService::sendTrainingStatusManualMode(void)
 void MicroBitIndoorBikeStepService::sendFitnessMachineStatusReset(void)
 {
     static const uint8_t buff[]={FTMP_OP_CODE_FITNESS_MACHINE_STATUS_01_RESET};
-    uBit.ble->gattServer().notify(this->fitnessTrainingStatusCharacteristicHandle
+    uBit.ble->gattServer().notify(this->fitnessMachineStatusCharacteristicHandle
         , (uint8_t *)&buff, sizeof(buff));
 }
 

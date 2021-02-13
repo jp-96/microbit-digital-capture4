@@ -146,7 +146,7 @@ public:
       * @param _uBit The instance of a MicroBit runtime include a BLE device that we're running on.
       * @param _indoorBike An instance of MicroBitIndoorBikeStepSensor to use as our indoor bike source.
       */
-    MicroBitIndoorBikeStepService(MicroBit &_uBit, MicroBitIndoorBikeStepSensor &_indoorBike, uint16_t id = MICROBIT_INDOORBIKE_STEP_SENSOR_ID);
+    MicroBitIndoorBikeStepService(MicroBit &_uBit, MicroBitIndoorBikeStepSensor &_indoorBike, uint16_t id = MICROBIT_INDOORBIKE_STEP_SERVICE_ID);
 
     /**
       * Callback. Invoked when any of our attributes are written via BLE.
@@ -167,11 +167,16 @@ private:
     uint16_t id;
     
     // Characteristic buffer
-    uint8_t indoorBikeDataCharacteristicBuffer[2+2+2+2+2];
-    uint8_t fitnessMachineControlPointCharacteristicBuffer[1+2+2+1+1];
-    uint8_t fitnessMachineFeatureCharacteristicBuffer[4+4];
-    uint8_t fitnessMachineStatusCharacteristicBuffer[2];
-    uint8_t fitnessTrainingStatusCharacteristicBuffer[1+7];
+    static const uint16_t indoorBikeDataCharacteristicBufferSize = 2+2+2; // "<HHH", FTMS p.42, <Flags>, <Instantaneous Speed>, <Instantaneous Cadence>
+    uint8_t indoorBikeDataCharacteristicBuffer[indoorBikeDataCharacteristicBufferSize];
+    static const uint16_t fitnessMachineControlPointCharacteristicBufferSize = 1+18; // "<B*" , FTMS p.50, <Op Code>, <Parameter>
+    uint8_t fitnessMachineControlPointCharacteristicBuffer[fitnessMachineControlPointCharacteristicBufferSize];
+    static const uint16_t fitnessMachineFeatureCharacteristicBufferSize = 4+4;// "<II" , FTMS p.19, <Fitness Machine Features>, <Target Setting Features>
+    uint8_t fitnessMachineFeatureCharacteristicBuffer[fitnessMachineFeatureCharacteristicBufferSize];
+    static const uint16_t fitnessMachineStatusCharacteristicBufferSize = 1+0; // "<B*" , FTMS p.66, <Op Code>, <Parameter>
+    uint8_t fitnessMachineStatusCharacteristicBuffer[fitnessMachineStatusCharacteristicBufferSize];
+    static const uint16_t fitnessTrainingStatusCharacteristicBufferSize = 1+1; // "<BB" , FTMS p.46, <Flags>, <Training Status>, <Training Status String (if present)>
+    uint8_t fitnessTrainingStatusCharacteristicBuffer[fitnessTrainingStatusCharacteristicBufferSize];
     
     // Handles to access each characteristic when they are held by Soft Device.
     GattAttribute::Handle_t indoorBikeDataCharacteristicHandle;
