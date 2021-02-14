@@ -34,7 +34,7 @@ void setup()
 {
     sensor = new MicroBitIndoorBikeStepSensor(uBit);
     service = new MicroBitIndoorBikeStepService(uBit, *sensor);
-    uBit.addIdleComponent(sensor);   
+    sensor->idleTick();
 }
 
 int main()

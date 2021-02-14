@@ -68,6 +68,15 @@ MicroBitIndoorBikeStepSensor::MicroBitIndoorBikeStepSensor(MicroBit &_uBit, Micr
 
 void MicroBitIndoorBikeStepSensor::idleTick()
 {
+
+    if(!(status & MICROBIT_INDOOR_BIKE_STEP_SENSOR_ADDED_TO_IDLE))
+    {
+        // If we're running under a fiber scheduer, register ourselves for a periodic callback to keep our data up to date.
+        // Otherwise, we do just do this on demand, when polled through our read() interface.
+        fiber_add_idle_component(this);
+        status |= MICROBIT_INDOOR_BIKE_STEP_SENSOR_ADDED_TO_IDLE;
+    }
+    
     this->update();
 }
 
@@ -90,14 +99,6 @@ void MicroBitIndoorBikeStepSensor::update(void)
 {
     uint64_t currentTime = system_timer_current_time_us();
 
-    if(!(status & MICROBIT_INDOOR_BIKE_STEP_SENSOR_ADDED_TO_IDLE))
-    {
-        // If we're running under a fiber scheduer, register ourselves for a periodic callback to keep our data up to date.
-        // Otherwise, we do just do this on demand, when polled through our read() interface.
-        fiber_add_idle_component(this);
-        status |= MICROBIT_INDOOR_BIKE_STEP_SENSOR_ADDED_TO_IDLE;
-    }
-    
     if (currentTime >= this->updateSampleTimestamp)
     {
         this->updateSampleTimestamp = currentTime + this->SENSOR_UPDATE_PERIOD_US;
