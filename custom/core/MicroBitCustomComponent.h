@@ -22,32 +22,23 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+#ifndef MICROBIT_CUSTOM_COMPONENT_H
+#define MICROBIT_CUSTOM_COMPONENT_H
+
 #include "MicroBit.h"
-#include "MicroBitIndoorBikeStepSensor.h"
-#include "MicroBitIndoorBikeStepService.h"
 
-MicroBit uBit;
-MicroBitIndoorBikeStepSensor *sensor;
-MicroBitIndoorBikeStepService *service;
-
-void setup()
+class MicroBitCustomComponent : public MicroBitComponent
 {
-    sensor = new MicroBitIndoorBikeStepSensor(uBit);
-    service = new MicroBitIndoorBikeStepService(uBit, *sensor);
-    sensor->idleTick();
-}
+public:
 
-int main()
-{
-    // Initialise the micro:bit runtime.
-    uBit.init();
+    /**
+      * Event Bus ID of this component.
+      */ 
+    uint16_t getId(void)
+    {
+        return this->id;
+    }
 
-    // Insert your code here!
-    create_fiber(setup);
+};
 
-    // If main exits, there may still be other fibers running or registered event handlers etc.
-    // Simply release this fiber, which will mean we enter the scheduler. Worse case, we then
-    // sit in the idle task forever, in a power efficient sleep.
-    release_fiber();
-}
-
+#endif /* #ifndef MICROBIT_CUSTOM_COMPONENT_H */
