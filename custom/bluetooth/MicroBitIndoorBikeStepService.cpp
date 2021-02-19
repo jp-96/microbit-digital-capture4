@@ -191,7 +191,7 @@ void MicroBitIndoorBikeStepService::onDataWritten(const GattWriteCallbackParams 
         // Fire MicroBit Event
         if (result[0]==FTMP_RESULT_CODE_CPPR_01_SUCCESS)
         {
-            new MicroBitEvent(MICROBIT_INDOORBIKE_STEP_SERVICE_ID, eventValue);
+            new MicroBitEvent(this->id, eventValue);
         }
 
         // Debug - USB Serial
